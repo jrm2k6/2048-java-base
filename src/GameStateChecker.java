@@ -1,5 +1,3 @@
-package com.jumyapps.twothousands48.logic;
-
 public class GameStateChecker {
     public GameStateChecker() {
     }
