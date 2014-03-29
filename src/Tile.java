@@ -1,9 +1,14 @@
+import java.awt.*;
+
 public class Tile {
 	public int x;
 	public int y;
 	public int value;
 	public int color;
 	public boolean hasMerged;
+	public Point previousPosition;
+	public Point mergedFrom;
+	public boolean hasPreviousPosition;
 
 	public Tile(int x, int y, int value, int color) {
 		this.x = x;
@@ -36,5 +41,14 @@ public class Tile {
 		} else {
 			return SpecialPosition.NONE;
 		}
+	}
+
+	public void setPreviousPosition(Point _previousPosition) {
+		this.previousPosition = _previousPosition;
+		hasPreviousPosition = true;
+	}
+
+	public void setHasPreviousPosition(boolean _hasPreviousPosition) {
+		this.hasPreviousPosition = _hasPreviousPosition;
 	}
 }

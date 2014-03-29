@@ -168,75 +168,82 @@ public class Board {
 				int indexNonNullTile = findNextNonNullTileIndex(line, i + 1);
 
 				if (indexNonNullTile != -1) {
+					if (!line[indexNonNullTile].hasPreviousPosition) {
+						Point previousPosition = getPreviousPosition(line[indexNonNullTile], row, direction);
+						line[indexNonNullTile].setPreviousPosition(previousPosition);
+						System.out.println("Board.translateToLeft translating " + line[indexNonNullTile].previousPosition.toString());
+					}
 					line[i] = line[indexNonNullTile];
 					line[indexNonNullTile] = null;
 				} else {
 					break;
+				}
+			} else {
+				if (!line[i].hasPreviousPosition) {
+					Point previousPosition = getPreviousPosition(line[i], row, direction);
+					line[i].setPreviousPosition(previousPosition);
+					System.out.println("Board.translateToLeft not translating " + line[i].previousPosition.toString());
 				}
 			}
 			i++;
 		}
 	}
 
-	private void setPreviousPositionForLine(Tile tile, int row, Direction direction) {
+	private Point getPreviousPosition(Tile tile, int row, Direction direction) {
+		Point position = null;
+		Point realCoordinates;
 		if (tile == null) {
-			return;
+			return null;
 		}
 
 		switch (direction) {
 		case LEFT:
-			tile.previousPosition = new Point(tile.x, tile.y);
+			position = new Point(tile.x, tile.y);
 			break;
 		case RIGHT:
-			tile.previousPosition = new Point(tile.x, GameConstants.GAME_DIMENSION - tile.x - 1);
+			realCoordinates = getRealCoordinatesForRight(tile);
+			position = realCoordinates;
 			break;
 		case UP:
+			realCoordinates = getRealCoordinatesForUp(tile, row);
+			position = realCoordinates;
 			break;
 		case DOWN:
+			realCoordinates = getRealCoordinatesForDown(tile, row);
+			position = realCoordinates;
 			break;
 		}
+		return position;
+	}
 
-		System.out.println("Board.setPreviousPositionForLine " + tile.previousPosition.toString());
+	private Point getRealCoordinatesForDown(Tile tile, int row) {
+		return new Point(GameConstants.GAME_DIMENSION - tile.x - 1, tile.y);
+	}
+
+	private Point getRealCoordinatesForUp(Tile tile, int row) {
+		return new Point(tile.x, tile.y);
+	}
+
+	private Point getRealCoordinatesForRight(Tile tile) {
+		return new Point(tile.x, GameConstants.GAME_DIMENSION - tile.y - 1);
 	}
 
 	public void mergeCells(Tile[] line, int row, int column, Direction direction) {
 		if (line[column] != null && column+1 < dimension && line[column+1] != null && line[column].value == line[column+1].value && !line[column].hasMerged) {
 			line[column].value = line[column].value * 2;
 			line[column].hasMerged = true;
-			addMergeToTracker(direction, row, column);
+			addMergeToTracker(line[column], line[column+1]);
 			line[column+1] = null;
 		}
 	}
 
-	private void addMergeToTracker(Direction direction, int row, int column) {
-		if (direction == Direction.UP || direction == Direction.DOWN) {
-			// columns = row, row = columns
-			Point[] realCoordinates = getRealCoordinatesFor(column, row, direction);
-			mergeTracker.addMerge(realCoordinates[0], realCoordinates[1]);
-		} else if (direction == Direction.RIGHT) {
-			mergeTracker.addMerge(new Point(row, column), new Point(row, column+1));
-		} else {
-			mergeTracker.addMerge(new Point(row, column+1), new Point(row, column));
-		}
-	}
-
-	private Point[] getRealCoordinatesFor(int row, int column, Direction direction) {
-		Point[] results = new Point[2];
-		switch (direction) {
-			case UP:
-				results[0] = new Point(column+1, row);
-				results[1] = new Point(column, row);
-				break;
-			case DOWN:
-				results[0] = new Point(column, row);
-				results[1] = new Point(column+1, row);
-				break;
-		}
-		return results;
+	private void addMergeToTracker(Tile growingCell, Tile mergedCell) {
+		mergeTracker.addMerge(mergedCell.previousPosition, growingCell.previousPosition);
 	}
 
 	public void moveLineLeft(Tile[] line, int row, Boolean reorder, Direction direction) {
 		int column = 0;
+		setUpTilesForTranslate(line);
 		while (column < line.length) {
 			translateToLeft(line, row, direction);
 			mergeCells(line, row, column, direction);
@@ -244,6 +251,14 @@ public class Board {
 				reindexCells(line, row, Reordering.HORIZONTAL);
 			}
 			column++;
+		}
+	}
+
+	private void setUpTilesForTranslate(Tile[] line) {
+		for (int i=0; i<line.length; i++) {
+			if (line[i] != null) {
+				line[i].hasPreviousPosition = false;
+			}
 		}
 	}
 

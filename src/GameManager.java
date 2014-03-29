@@ -72,6 +72,7 @@ public class GameManager implements IMovableManager {
 		Tile[][] updatedBoard = boardModel.moveGridTo(Direction.DOWN);
 		boardView.update(updatedBoard);
 		nextRound();
+		isFirstRound = false;
 	}
 
 	private void nextRound() {
